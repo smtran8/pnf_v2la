@@ -21,8 +21,8 @@ Unlike reactive obstacle avoidance (for example gap following), which responds o
 
 ---
 
-## System Overview:
-The main model (P&F model) will sometimes be referred to as forecaster. The forecaster will consume outputs from the detector and tracker, which will be introduced below. Obstacles in this testing environment are **other LIMO rovers** in the lab.
+## System Overview
+The main model (P&F model) will sometimes be referred to as forecaster. The forecaster will consume outputs from the detector and tracker, which will be introduced below. Obstacles in this testing environment are **other LIMO rovers** in the lab. Note that obstacles will also be referred to as vehicles or agents.
 
 ---
 ## Step 1 — Detector & Tracker
@@ -33,3 +33,9 @@ The first component is the perception front-end: it turns raw camera frames into
 - Run an object detector (YOLO-class) on the LIMO camera stream.
 - **Will possibly fine-tune to recognize a LIMO** 
 - **Goal:** reliably detect (through putting a box) a LIMO across varied distances, angles, and lighting.
+
+### Tracker
+- Add a multi-object tracker (ByteTrack) on top of the detector.
+- The tracker assigns a **persistent track ID** to each individual agent, maintained across frames.
+- **Class ID vs. Track ID:** the *class ID* is the category (all LIMOs share "LIMO"); the *track ID* is the unique identity of one agent over time (LIMO-A = #1, LIMO-B = #2). Forecasting model needs the track ID to assemble one trajectory per agent.
+- **Possible Challenge:** *ID switches* — identities being swapped after two agents cross or briefly occlude. 
