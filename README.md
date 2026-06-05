@@ -10,7 +10,7 @@ Unlike reactive obstacle avoidance (for example gap following), which responds o
 
 ## Platform
 
-| | |
+
 |---|---|
 | **Robot** | AgileX LIMO Pro | Supported by V2LA lab @UF
 | **Compute** | NVIDIA Jetson Orin Nano |
