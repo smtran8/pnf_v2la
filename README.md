@@ -22,6 +22,9 @@ Unlike reactive obstacle avoidance (for example gap following), which responds o
 ---
 
 ## System Overview:
+The main model (P&F model) will sometimes be referred to as forecaster. The forecaster will consume outputs from the detector and tracker, which will be introduced below. Obstacles in this testing environment are **other LIMO rovers** in the lab.
+
+---
 ## Step 1 — Detector & Tracker
 
 The first component is the perception front-end: it turns raw camera frames into **persistent, identified tracks** that P&F model will later consume. 
@@ -29,4 +32,4 @@ The first component is the perception front-end: it turns raw camera frames into
 ### Detector
 - Run an object detector (YOLO-class) on the LIMO camera stream.
 - **Will possibly fine-tune to recognize a LIMO** 
-- **Goal:** reliably box a LIMO across varied distances, angles, and lighting.
+- **Goal:** reliably detect (through putting a box) a LIMO across varied distances, angles, and lighting.
