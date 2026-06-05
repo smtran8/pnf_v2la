@@ -10,7 +10,7 @@ Unlike reactive obstacle avoidance (for example gap following), which responds o
 
 ## Platform
 
-
+| | |
 |---|---|
 | **Robot** | AgileX LIMO Pro | Supported by V2LA lab @UF
 | **Compute** | NVIDIA Jetson Orin Nano |
@@ -39,3 +39,5 @@ The first component is the perception front-end: it turns raw camera frames into
 - The tracker assigns a **persistent track ID** to each individual agent, maintained across frames.
 - **Class ID vs. Track ID:** the *class ID* is the category (all LIMOs share "LIMO"); the *track ID* is the unique identity of one agent over time (LIMO-A = #1, LIMO-B = #2). Forecasting model needs the track ID to assemble one trajectory per agent.
 - **Possible Challenge:** *ID switches* — identities being swapped after two agents cross or briefly occlude. 
+
+
