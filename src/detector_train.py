@@ -10,19 +10,20 @@ def main():
     model = YOLO("yolo26n.pt")  
 
     model.train(
-        data="data.yaml",   # 
-        epochs=10,                 # Test - small
-        imgsz=640,
-        batch=4,                   # small batch, only 25 image
-        device="cpu",              
-        #project="runs/detect",
-        name="limo_dryrun",
-        verbose=True,
-    )
+    data="data.yaml",
+    epochs=100,         
+    imgsz=640,
+    batch=8,            
+    device='0',            # '0' for gpu
+    patience=20,         # Stop early if val stops improving for 20 epochs (prevents overfit + wasted time)
+    #project="runs/detect",
+    name="limo_full",    # 
+    verbose=True,
+)
 
     print("\n=== Dry-run complete ===")
-    print("best.pt outputted in the directory: runs/detect/limo_dryrun/weights/,")
-    print("There are only 25 images. Next step: collect the full dataset and train on HiPerGator.")
+    print("best.pt outputted in the directory: runs/detect")
+    print("There are around 200 images now. Note that image could be duplicates, so the result is pretty optimistic")
 
 
 if __name__ == "__main__":

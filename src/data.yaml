@@ -1,7 +1,7 @@
 path: ../data
 train: train/images
-val: train/images
-#test: test/images
+val: valid/images
+#test: ../test/images
 
 nc: 1
 names: ['limo']
@@ -9,6 +9,6 @@ names: ['limo']
 roboflow:
   workspace: pnf-limo-labelling
   project: labelling-limo-object-detection
-  version: dataset
+  version: 1
   license: CC BY 4.0
-  url: https://universe.roboflow.com/pnf-limo-labelling/labelling-limo-object-detection/dataset/dataset
+  url: https://universe.roboflow.com/pnf-limo-labelling/labelling-limo-object-detection/dataset/1
