@@ -7,7 +7,8 @@ __pycache__/
 *.so
 # PDF
 *.pdf
-
+# Virtual environment:
+pf-env
 # Distribution / packaging
 .Python
 build/
