@@ -38,8 +38,8 @@ The first component is the perception front-end: it turns raw camera frames into
 - **June 9th** - Done Detector. Achived a model with great confidence: 90% with static image and 70% with live video.
 ### Tracker
 - Add a multi-object tracker (ByteTrack) on top of the detector.
-- The tracker assigns a **persistent track ID** to each individual agent, maintained across frames.
-- **Class ID vs. Track ID:** the *class ID* is the category (all LIMOs share "LIMO"); the *track ID* is the unique identity of one agent over time (LIMO-A = #1, LIMO-B = #2). Forecasting model needs the track ID to assemble one trajectory per agent.
+- The tracker assigns a **persistent track ID** to each individual agent, maintained across frames. Reference:(https://blog.roboflow.com/what-is-bytetrack-computer-vision/)
+- **Class ID vs. Track ID:** the *class ID* is the category (all LIMOs share "limo"); the *track ID* is the unique identity of one agent over time (LIMO-A = #1, LIMO-B = #2). Forecasting model needs the track ID to assemble one trajectory per agent.
 - **Possible Challenge:** *ID switches* — identities being swapped after two agents cross or briefly occlude. 
 
 
