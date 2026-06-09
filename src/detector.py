@@ -18,7 +18,8 @@ Usage:
     python detector.py --conf 0.15. Default is 0.25. If we lower 0.15 and see a LIMO car label, but disappear at 0.25, that is weak detection
 
 Controls (live/video window):
-    q  = quit"""
+    q  = quit
+    """
     
     
 def parse_args():
