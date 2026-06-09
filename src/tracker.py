@@ -60,7 +60,7 @@ def main():
             persist=True,
             tracker="bytetrack.yaml",
             conf=args.conf,
-            verbose=False,
+            verbose=False
         )
  
         ids_this_frame = []
