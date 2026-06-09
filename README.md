@@ -35,7 +35,7 @@ The first component is the perception front-end: it turns raw camera frames into
 - **Goal:** reliably detect (through putting a box) a LIMO across varied distances, angles, and lighting.
 - **June 5th** - Tried YOLO26 by Ultralytics: [https://docs.ultralytics.com/tasks/detect#export](Reference). The model cannot detect a LIMO => Start gathering data and will fine-tune model.
 - **June 6th** - Tried YOLO26 again with light fine-tuning (100 epochs, batch = 8, patience = 20) with 200+ labeled image. Achieve great result but suspect potential data leakage (duplicate images) => Try again when gets to lab. Unseen image could reveal if the model actually overfits.
-
+- **June 9th** - Done Detector. Achived a model with great confidence: 90% with static image and 70% with live video.
 ### Tracker
 - Add a multi-object tracker (ByteTrack) on top of the detector.
 - The tracker assigns a **persistent track ID** to each individual agent, maintained across frames.
