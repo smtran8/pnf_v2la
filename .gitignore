@@ -8,9 +8,9 @@ __pycache__/
 # PDF
 *.pdf
 # Ignore Models for now:
-runs/
+
 #Ignore Data:
-data/ 
+
 *env
 # Distribution / packaging
 .Python

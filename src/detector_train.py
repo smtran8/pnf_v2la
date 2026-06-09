@@ -14,7 +14,7 @@ def main():
     epochs=100,         
     imgsz=640,
     batch=8,            
-    device='0',            # '0' for gpu
+    device='cpu',            # '0' for gpu
     patience=20,         # Stop early if val stops improving for 20 epochs (prevents overfit + wasted time)
     #project="runs/detect",
     name="limo_full",    # 
