@@ -1,7 +1,7 @@
 task: detect
 mode: train
 model: yolo26n.pt
-data: data.yaml
+data: /blue/tkahveci/sm.tran/pnf_v2la/src/data.yaml
 epochs: 100
 time: null
 patience: 20
@@ -107,4 +107,4 @@ auto_augment: randaugment
 erasing: 0.4
 cfg: null
 tracker: botsort.yaml
-save_dir: /Users/User/Desktop/V2LA_UF/Summer_Projects/pnf_v2la/runs/detect/limo_full
+save_dir: /blue/tkahveci/sm.tran/pnf_v2la/runs/detect/limo_full
