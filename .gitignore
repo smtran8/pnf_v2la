@@ -7,8 +7,11 @@ __pycache__/
 *.so
 # PDF
 *.pdf
-# Virtual environment:
-pf-env
+# Ignore Models for now:
+runs/
+#Ignore Data:
+data/ 
+*env
 # Distribution / packaging
 .Python
 build/

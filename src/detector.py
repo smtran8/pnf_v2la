@@ -41,7 +41,7 @@ def draw_and_report(frame, result, model_names):
     for box in result.boxes:
         cls_id = int(box.cls[0])
         label = model_names[cls_id]
-        ALLOWED = {"car", "truck", "bus"}
+        ALLOWED = {"limo"}
 
         
         #if label not in ALLOWED:
