@@ -7,7 +7,8 @@ __pycache__/
 *.so
 # PDF
 *.pdf
-
+# Ignore Models for now:
+runs/
 #Ignore Data:
 data/ 
 *env
