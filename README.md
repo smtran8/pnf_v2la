@@ -52,15 +52,20 @@ General Idea:
   + A Depth Distance: This is the distance along the camera's forward axis - which is the Z coordinate. This distance reveals how far the object is, but in the camera direction. A visual example is when an object is located to the very left side of the camera.
   + Intrinsic Paramters: For example fx and fy (focal length). These are verical and horizontal to convert pixels to pure meters. For example, if a LIMO shifts 1 meter distance, what will be the change in pixel and vice versa.
   + Principal Point: cx and cy. Optical center of the image - used to calculate an image offset from the center
+For a camera:
+Z = points forward, out the lens, the direction the camera looks. This is depth
+X = points sideways (left/right across the image).
+Y = points up/down (vertical).
 **Formula:**
 
 X = (u - cx) * Z/fx
 
 In which:
-- X is the LIMO's real world distance
+- X is the LIMO's side way distance
 - cx is the principal point of the image, fx is the focal length defined
 - Z is the Camera Depth Distance
 - u is the moving agent (another LIMO)'s pixel location, which is probably the bottom-center of the bounding box.
 
+The output will be a tuple of (Z, X) which shows what is the distance for Z and how much side way for X
 **Why not use LiDAR?**
 The formula above aims to solve a question - how far away is a LIMO in a real world. But a LiDAR can already do that, and can do much better, so why am I choosing the solution above? The answer is that a LiDAR can identify the distance better, but the detector and tracker cannot run on it. Note that detector and tracker only runs on image/video, so the camera with constant images will be a good suit for detector and tracker. Note: There is still a way to use LiDAR, especially for longer distance (~8 meters) rather than the camera depth with only 3 meters - but this upgrade will be implemented later.
