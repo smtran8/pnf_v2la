@@ -51,11 +51,13 @@ General Idea:
 - In each LIMO's car, the camera will return some information, including:
   + A Depth Distance: This is the distance along the camera's forward axis - which is the Z coordinate. This distance reveals how far the object is, but in the camera direction. A visual example is when an object is located to the very left side of the camera.
   + Intrinsic Paramters: For example fx and fy (focal length). These are verical and horizontal to convert pixels to pure meters. For example, if a LIMO shifts 1 meter distance, what will be the change in pixel and vice versa.
-  + Principal Point: cx and cy. Optical center of the image - used to calculate an image offset from the center
+  + Principal Point: cx and cy. Optical center of the image - used to calculate an image offset from the center.
+  
 For a camera:
-Z = points forward, out the lens, the direction the camera looks. This is depth
-X = points sideways (left/right across the image).
-Y = points up/down (vertical).
+- Z = points forward, out the lens, the direction the camera looks. This is depth.
+- X = points sideways (left/right across the image).
+- Y = points up/down (vertical).
+  
 **Formula:**
 
 X = (u - cx) * Z/fx
