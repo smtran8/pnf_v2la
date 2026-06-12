@@ -43,4 +43,12 @@ The first component is the perception front-end: it turns raw camera frames into
 - **Possible Challenge:** *ID switches* — identities being swapped after two agents cross or briefly occlude.
 - **June 9th** Done Tracker. The ID switches limit happens when a LIMO goes behind another LIMO, disappearing in the frames and gets a new ID when appears again. This challenge should not affect the final forecasting model; if a LIMO disappears in the frame, there is no way to predict its trajectory.
 
+---
+## Step 2 — Metric (Real World) Projection
 
+The second step is to plot the real x,y world coordinates from any moving LIMO. 
+General Idea:
+- In each LIMO's car, the camera will return some information, including:
+  + A Depth Distance: This is the distance along the camera's forward axis - which is the Z coordinate. This distance reveals how far the object is, but in the camera direction. A visual example is when an object is located to the very left side of the camera.
+  + Intrinsic Paramters: For example fx and fy (focal length). These are verical and horizontal to convert pixels to pure meters. For example, if a LIMO shifts 1 meter distance, what will be the change in pixel and vice versa.
+  + Principal Point: cx and cy. Optical center of the image - used to calculate an image offset from the center
