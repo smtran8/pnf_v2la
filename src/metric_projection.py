@@ -5,7 +5,7 @@ from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge
 import message_filters
 from ultralytics import YOLO
-
+import cv2
 """Metric Projection:
 Subscribes to synchronized RGB + depth from the LIMO's Orbbec camera, runs
 YOLO+ByteTrack on the RGB, looks up depth at each tracked LIMO's ground point,
@@ -13,12 +13,22 @@ and projects to metric (x, y). Publishes/prints the per-track metric positions.
 Note that we have a 50 ms Time Syncing to match RGB with Camera Depth"""
 
 #Edit the following to match LIMO's ros2 topic:
-RGB_TOPIC = "/camera/color/image_raw"
-DEPTH_TOPIC = "/camera/depth/image_raw"     
-INFO_TOPIC = "/camera/color/camera_info"
+RGB_TOPIC = "/camera/color/image_raw" #RGB data
+DEPTH_TOPIC = "/camera/depth/image_raw"    #Instead of each pixel storing R,G,B, each stores a distance number - how far away the surface at that pixel location from the camera lens, in milimeters
+INFO_TOPIC = "/camera/color/camera_info" #Physical properties of the camera -fx,fy,...
+#Inside CameraDepth:
+#Encoding: 16UC1
+#Height: 480
+#Width: 640
 
 MODEL_PATH = "best.pt"
 CONF = 0.3
+
+CENTER_U = 320
+CENTER_V = 240
+CROSSHAIR_COLOR = (0, 0, 255)   # red in BGR
+CROSSHAIR_SIZE  = 20
+CROSSHAIR_THICK = 2
 
 
 def pixel_to_metric(u, v, depth_m, fx, fy, cx, cy):
@@ -75,13 +85,18 @@ class MetricProjectionNode(Node):
     def info_cb(self, msg: CameraInfo):
         """Grab intrinsics once from the K matrix"""
         if self.fx is None:
-            self.fx = msg.k[0]
-            self.fy = msg.k[4]
-            self.cx = msg.k[2]
-            self.cy = msg.k[5]
+            self.fx = round(msg.k[0], 2)
+            self.fy = round(msg.k[4], 2)
+            self.cx = round(msg.k[2], 2)
+            self.cy = round(msg.k[5], 2)
             self.get_logger().info(
                 f"Got intrinsics: fx={self.fx:.1f} fy={self.fy:.1f} "
                 f"cx={self.cx:.1f} cy={self.cy:.1f}")
+            #Just in case:
+            #1. k[0] = ~491.22
+            #2. k[4] = ~491.22
+            #3. k[2] = 323.98
+            #4. k[5] = 213.08
  
     def frame_cb(self, rgb_msg: Image, depth_msg: Image):
         if self.fx is None:
@@ -112,6 +127,34 @@ class MetricProjectionNode(Node):
                     f"LIMO id:{tid}  x={x_fwd:.2f}m fwd  y={y_side:.2f}m side")
             else:
                 self.get_logger().info(f"LIMO id:{tid}  no valid depth")
+                # --- Draw crosshair on RGB and show window ---
+                
+        display = rgb.copy()
+
+        # Horizontal arm
+        cv2.line(display,
+                (CENTER_U - CROSSHAIR_SIZE, CENTER_V),
+                (CENTER_U + CROSSHAIR_SIZE, CENTER_V),
+                CROSSHAIR_COLOR, CROSSHAIR_THICK)
+        # Vertical arm
+        cv2.line(display,
+                (CENTER_U, CENTER_V - CROSSHAIR_SIZE),
+                (CENTER_U, CENTER_V + CROSSHAIR_SIZE),
+                CROSSHAIR_COLOR, CROSSHAIR_THICK)
+
+        # Overlay metric reading as text
+        if metric is not None:
+            text = f"fwd={x_fwd:.2f}m  side={y_side:+.2f}m"
+        else:
+            text = "no depth"
+        cv2.putText(display, text,
+                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7, CROSSHAIR_COLOR, 2)
+
+        cv2.imshow("P&F depth test  (q to quit)", display)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+            rclpy.shutdown()
  
  
 def main():
