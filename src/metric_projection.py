@@ -4,7 +4,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge
 import message_filters
-#from ultralytics import YOLO
+from ultralytics import YOLO
 import cv2
 """Metric Projection:
 Subscribes to synchronized RGB + depth from the LIMO's Orbbec camera, runs
@@ -21,13 +21,13 @@ INFO_TOPIC = "/camera/color/camera_info" #Physical properties of the camera -fx,
 #Height: 480
 #Width: 640
 
-#MODEL_PATH = "best.pt"
-#CONF = 0.3
+MODEL_PATH = "/home/agilex/limo_ros2_ws/src/son_metric_projection/son_metric_projection/best.pt"
+CONF = 0.3
 
-CENTER_U = 320# This will make the side distance default to 0 every time. Once we put the detector box in, u and v will be changed to follow the LIMO
-CENTER_V = 240
+#CENTER_U = 320# This will make the side distance default to 0 every time. Once we put the detector box in, u and v will be changed to follow the LIMO
+#CENTER_V = 240
 CROSSHAIR_COLOR = (0, 0, 255)   # red in BGR
-CROSSHAIR_SIZE  = 20
+#CROSSHAIR_SIZE  = 20
 CROSSHAIR_THICK = 2
 
 
@@ -39,13 +39,24 @@ def pixel_to_metric(u, v, depth_m, fx, fy, cx, cy):
     side    = (u - cx) * depth_m / fx    # camera X axis: left/right
     return (forward, side)
 
-def box_ground_pixel(x1, y1, x2, y2):
-    """Compute u and v => Bottom-center pixel, which is also ground contact point"""
-    return int((x1 + x2) / 2), int(y2)
+def box_ground_pixel(x1, y1, x2, y2, ratio=0.4):
+    """Sample point pulled up 40% of the box height from the bottom,
+    away from the noisy/edge-of-frame region near the true ground contact."""
+    u = int((x1 + x2) / 2)
+    v = int(y2 - (y2 - y1) * ratio)
+    return u, v
 
+def scale_to_depth(u_color, v_color, color_shape, depth_shape):
+    """Convert color-space pixel to depth-space pixel, for SAMPLING ONLY."""
+    color_h, color_w = color_shape[:2]
+    depth_h, depth_w = depth_shape[:2]
+    u_depth = int(u_color * depth_w / color_w)
+    v_depth = int(v_color * depth_h / color_h)
+    return u_depth, v_depth
 
 #A potential issue, not every time we point a u,v is correct => It could be a noise or a small hole. Therefore we add a window size. When looks at u and v, we also look at the neighbors of u and v
-
+#And the issue happens => For 2 or more LIMOs it will take the range of the wall behind => colliding median window
+#So, let's just use the bounding box pixel instead of window median
 def sample_depth(depth_image, u, v, win=5):
     """Median depth in a small window (robust to holes). Returns meters or None."""
     h, w = depth_image.shape[:2]
@@ -55,22 +66,54 @@ def sample_depth(depth_image, u, v, win=5):
     valid = patch[patch > 0]
     if valid.size == 0:
         return None
-    depth_mm = float(np.median(valid))
+    #Instead of median, try min to see if it does catch LIMO
+    depth_mm = float(np.min(valid))
     #return depth_mm
     return depth_mm / 1000.0 
     #Need to check: If mm is already meters then we good, if not need to convert
     #Ros2 topic echo
     
     
+#This approach does not work - Use Pixel on the bounding box could sometimes use the wall as the furthest distance -> Either drop this approach or strictly make the point closer to the bottom of limo
+
+# def sample_depth_in_box(depth_image, x1, y1, x2, y2, shrink=0.2):
+#     """
+#     Median depth over the INNER portion of the detection box (depth-space
+#     coordinates), shrinking each side by `shrink` fraction to stay well
+#     inside the object's silhouette and avoid bleeding into background or
+#     a neighboring object at the box edges.
+
+#     Returns depth in METERS, or None if no valid reading.
+#     """
+#     h, w = depth_image.shape[:2]
+#     bw, bh = x2 - x1, y2 - y1
+
+#     ix1 = max(0, int(x1 + bw * shrink))
+#     ix2 = min(w, int(x2 - bw * shrink))
+#     iy1 = max(0, int(y1 + bh * shrink))
+#     iy2 = min(h, int(y2 - bh * shrink))
+
+#     patch = depth_image[iy1:iy2, ix1:ix2].astype(np.float32)
+#     valid = patch[patch > 0]
+#     if valid.size == 0:
+#         return None
+
+#     depth_mm = float(np.median(valid))
+#     return depth_mm / 1000.0   # mm -> meters
+    
+    
 class MetricProjectionNode(Node):
     def __init__(self):
         super().__init__("metric_projection")
         self.bridge = CvBridge()
-        #self.model = YOLO(MODEL_PATH)
+        self.model = YOLO(MODEL_PATH)
+        #Used a dictionary storage to send the LIMO distance back to the nearest one:
+        self.last_good_metric = {}   # track_id -> (forward, side), most recent valid reading
  
         # Intrinsics Parameter— filled in once from CameraInfo message 
         self.fx = self.fy = self.cx = self.cy = None
         self.create_subscription(CameraInfo, INFO_TOPIC, self.info_cb, 10)
+        
  
         # Synchronize RGB + depth by timestamp so we always pair the right two objects
         rgb_sub = message_filters.Subscriber(self, Image, RGB_TOPIC)
@@ -97,7 +140,6 @@ class MetricProjectionNode(Node):
             #2. k[4] = ~491.22
             #3. k[2] = 323.98
             #4. k[5] = 213.08
- #Let's not use YOLO for now - try the camera depth first
     def frame_cb(self, rgb_msg: Image, depth_msg: Image):
         if self.fx is None:
             return  # wait until we have intrinsics
@@ -106,43 +148,74 @@ class MetricProjectionNode(Node):
         rgb = self.bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="bgr8")
         depth = self.bridge.imgmsg_to_cv2(depth_msg, desired_encoding="passthrough")
 
-        # --- Sample depth at the CENTER pixel (no detector/tracker needed) ---
-        depth_m = sample_depth(depth, CENTER_U, CENTER_V)
-        metric = pixel_to_metric(CENTER_U, CENTER_V, depth_m,
-                                self.fx, self.fy, self.cx, self.cy)
+        # Detect + track LIMOs in the RGB frame
+        results = self.model.track(
+            rgb, persist=True, tracker="bytetrack.yaml",
+            conf=CONF, verbose=False)
 
-        if metric is not None:
-            x_fwd, y_side = metric
-            self.get_logger().info(
-                f"forward={x_fwd:.2f}m  side={y_side:+.2f}m")
-        else:
-            self.get_logger().info("no valid depth at center pixel")
+        # Clean up last_good_metric entries for tracks no longer active this frame
+        active_ids = {int(box.id[0]) for box in results[0].boxes if box.id is not None}
+        stale_ids = set(self.last_good_metric.keys()) - active_ids
+        for sid in stale_ids:
+            del self.last_good_metric[sid]
 
-        # --- Draw crosshair on RGB and show window ---
         display = rgb.copy()
+        # for box in results[0].boxes:
+        #     if box.id is None:
+        #         continue
+        #     tid = int(box.id[0])
+        #     x1, y1, x2, y2 = map(int, box.xyxy[0])
+        #     u, v = box_ground_pixel(x1, y1, x2, y2)
 
-        cv2.line(display,
-                (CENTER_U - CROSSHAIR_SIZE, CENTER_V),
-                (CENTER_U + CROSSHAIR_SIZE, CENTER_V),
-                CROSSHAIR_COLOR, CROSSHAIR_THICK)
-        cv2.line(display,
-                (CENTER_U, CENTER_V - CROSSHAIR_SIZE),
-                (CENTER_U, CENTER_V + CROSSHAIR_SIZE),
-                CROSSHAIR_COLOR, CROSSHAIR_THICK)
+        #     # Scale the WHOLE BOX corners into depth-space (not just one point)
+        #     x1_d, y1_d = scale_to_depth(x1, y1, rgb.shape, depth.shape)
+        #     x2_d, y2_d = scale_to_depth(x2, y2, rgb.shape, depth.shape)
 
-        if metric is not None:
-            text = f"fwd={x_fwd:.2f}m  side={y_side:+.2f}m"
-        else:
-            text = "no depth"
-        cv2.putText(display, text,
-                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.7, CROSSHAIR_COLOR, 2)
+        #     depth_m = sample_depth_in_box(depth, x1_d, y1_d, x2_d, y2_d)
+        #     print(f"box(color)=({x1},{y1},{x2},{y2})  box(depth)=({x1_d},{y1_d},{x2_d},{y2_d})  depth_m={depth_m}")
 
-        cv2.imshow("P&F depth test  (q to quit)", display)
+        #     metric = pixel_to_metric(u, v, depth_m,
+        #                             self.fx, self.fy, self.cx, self.cy)
+        for box in results[0].boxes:
+            if box.id is None:
+                continue
+            tid = int(box.id[0])
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            u, v = box_ground_pixel(x1, y1, x2, y2)
+            u_d, v_d = scale_to_depth(u, v, rgb.shape, depth.shape)
+            depth_m = sample_depth(depth, u_d, v_d)
+            metric = pixel_to_metric(u, v, depth_m,
+                                    self.fx, self.fy, self.cx, self.cy)
+
+            # --- Safeguard: hold last known good value through brief depth dropouts ---
+            used_fallback = False
+            if metric is not None:
+                self.last_good_metric[tid] = metric
+            elif tid in self.last_good_metric:
+                metric = self.last_good_metric[tid]
+                used_fallback = True
+
+            # Draw the box + ground point regardless of depth validity
+            cv2.rectangle(display, (x1, y1), (x2, y2), CROSSHAIR_COLOR, 2)
+            cv2.circle(display, (u, v), 4, CROSSHAIR_COLOR, -1)
+
+            if metric is not None:
+                x_fwd, y_side = metric
+                status = " (held)" if used_fallback else ""
+                self.get_logger().info(
+                    f"LIMO id:{tid}  forward={x_fwd:.2f}m  side={y_side:+.2f}m{status}")
+                label = f"id:{tid} fwd={x_fwd:.2f}m side={y_side:+.2f}m{status}"
+            else:
+                self.get_logger().info(f"LIMO id:{tid}  no valid depth (no history yet)")
+                label = f"id:{tid} no depth"
+
+            cv2.putText(display, label, (x1, max(y1 - 8, 12)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, CROSSHAIR_COLOR, 2)
+
+        cv2.imshow("P&F metric projection  (q to quit)", display)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
             rclpy.shutdown()
-    
  
 def main():
     rclpy.init()
