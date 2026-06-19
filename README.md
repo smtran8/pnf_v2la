@@ -74,4 +74,8 @@ The formula above aims to solve a question - how far away is a LIMO in a real wo
 
 **June 19th)** Metric Projection works, however at this step I have not implemented the detector/tracker yet. Two observations that could be fixed by using detector and tracker:
 - The camera is default to have a very straightforward ray, and it sits on the head of the LIMO. Therefore, it will not see the other LIMO but rather just the wall. Lift the LIMO up will allow the distance to be correct.
-- The side information will need the data of the bounding box from the detector. 
+- The side information will need the data of the bounding box from the detector.
+
+**Update**:
+- Because the bounding box can contain Non-Limo objects, most of the times will be the wall behind, which could inflate the distance => Apply a minimum window options. For every pixel, take all values in the surrounding pixels (decided by a window size) and choose the minimum value => To differentiate between Limo and a wall.
+- Also to get the most accurate distance data, for any time a LIMO camera depth glitch (between None and the real distance value), we will revert back to the previous distance. Because LIMO moves slowly, the distance difference is not significant, allowing enough time for the real distance to show up.
