@@ -4,7 +4,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge
 import message_filters
-from ultralytics import YOLO
+#from ultralytics import YOLO
 import cv2
 """Metric Projection:
 Subscribes to synchronized RGB + depth from the LIMO's Orbbec camera, runs
@@ -21,10 +21,10 @@ INFO_TOPIC = "/camera/color/camera_info" #Physical properties of the camera -fx,
 #Height: 480
 #Width: 640
 
-MODEL_PATH = "best.pt"
-CONF = 0.3
+#MODEL_PATH = "best.pt"
+#CONF = 0.3
 
-CENTER_U = 320
+CENTER_U = 320# This will make the side distance default to 0 every time. Once we put the detector box in, u and v will be changed to follow the LIMO
 CENTER_V = 240
 CROSSHAIR_COLOR = (0, 0, 255)   # red in BGR
 CROSSHAIR_SIZE  = 20
@@ -56,8 +56,8 @@ def sample_depth(depth_image, u, v, win=5):
     if valid.size == 0:
         return None
     depth_mm = float(np.median(valid))
-    return depth_mm
-    #return depth_mm / 1000.0 
+    #return depth_mm
+    return depth_mm / 1000.0 
     #Need to check: If mm is already meters then we good, if not need to convert
     #Ros2 topic echo
     
@@ -66,7 +66,7 @@ class MetricProjectionNode(Node):
     def __init__(self):
         super().__init__("metric_projection")
         self.bridge = CvBridge()
-        self.model = YOLO(MODEL_PATH)
+        #self.model = YOLO(MODEL_PATH)
  
         # Intrinsics Parameter— filled in once from CameraInfo message 
         self.fx = self.fy = self.cx = self.cy = None
@@ -97,52 +97,39 @@ class MetricProjectionNode(Node):
             #2. k[4] = ~491.22
             #3. k[2] = 323.98
             #4. k[5] = 213.08
- 
+ #Let's not use YOLO for now - try the camera depth first
     def frame_cb(self, rgb_msg: Image, depth_msg: Image):
         if self.fx is None:
             return  # wait until we have intrinsics
- 
+
         # ROS Image -> OpenCV/numpy
         rgb = self.bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="bgr8")
         depth = self.bridge.imgmsg_to_cv2(depth_msg, desired_encoding="passthrough")
- 
-        results = self.model.track(
-            rgb, persist=True, tracker="bytetrack.yaml",
-            conf=CONF, verbose=False)
- 
-        for box in results[0].boxes:
-            if box.id is None:
-                continue
-            tid = int(box.id[0])
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
-            u, v = box_ground_pixel(x1, y1, x2, y2)
- 
-            depth_m = sample_depth(depth, u, v)
-            metric = pixel_to_metric(u, v, depth_m,
-                                     self.fx, self.fy, self.cx, self.cy)
- 
-            if metric is not None:
-                x_fwd, y_side = metric
-                self.get_logger().info(
-                    f"LIMO id:{tid}  x={x_fwd:.2f}m fwd  y={y_side:.2f}m side")
-            else:
-                self.get_logger().info(f"LIMO id:{tid}  no valid depth")
-                # --- Draw crosshair on RGB and show window ---
-                
+
+        # --- Sample depth at the CENTER pixel (no detector/tracker needed) ---
+        depth_m = sample_depth(depth, CENTER_U, CENTER_V)
+        metric = pixel_to_metric(CENTER_U, CENTER_V, depth_m,
+                                self.fx, self.fy, self.cx, self.cy)
+
+        if metric is not None:
+            x_fwd, y_side = metric
+            self.get_logger().info(
+                f"forward={x_fwd:.2f}m  side={y_side:+.2f}m")
+        else:
+            self.get_logger().info("no valid depth at center pixel")
+
+        # --- Draw crosshair on RGB and show window ---
         display = rgb.copy()
 
-        # Horizontal arm
         cv2.line(display,
                 (CENTER_U - CROSSHAIR_SIZE, CENTER_V),
                 (CENTER_U + CROSSHAIR_SIZE, CENTER_V),
                 CROSSHAIR_COLOR, CROSSHAIR_THICK)
-        # Vertical arm
         cv2.line(display,
                 (CENTER_U, CENTER_V - CROSSHAIR_SIZE),
                 (CENTER_U, CENTER_V + CROSSHAIR_SIZE),
                 CROSSHAIR_COLOR, CROSSHAIR_THICK)
 
-        # Overlay metric reading as text
         if metric is not None:
             text = f"fwd={x_fwd:.2f}m  side={y_side:+.2f}m"
         else:
@@ -155,7 +142,7 @@ class MetricProjectionNode(Node):
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
             rclpy.shutdown()
- 
+    
  
 def main():
     rclpy.init()
@@ -177,3 +164,5 @@ if __name__ == "__main__":
 #ros2 topic echo /camera/depth/image_raw --field width --field height --once
 #Also check:
 #ros2 topic list | grep -iE "depth|aligned|registered|to_color", they might already have a depth aligned to color
+#Note: when change a script file in LIMO that was already built, remember to remove all the build/ install/ and re-colcon build again:
+#rm -rf build/son_metric_projection install/son_metric_projection
