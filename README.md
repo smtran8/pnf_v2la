@@ -71,3 +71,7 @@ In which:
 The output will be a tuple of (Z, X) which shows what is the distance for Z and how much side way for X
 **Why not use LiDAR?**
 The formula above aims to solve a question - how far away is a LIMO in a real world. But a LiDAR can already do that, and can do much better, so why am I choosing the solution above? The answer is that a LiDAR can identify the distance better, but the detector and tracker cannot run on it. Note that detector and tracker only runs on image/video, so the camera with constant images will be a good suit for detector and tracker. Note: There is still a way to use LiDAR, especially for longer distance (~8 meters) rather than the camera depth with only 3 meters - but this upgrade will be implemented later.
+
+**June 19th)** Metric Projection works, however at this step I have not implemented the detector/tracker yet. Two observations that could be fixed by using detector and tracker:
+- The camera is default to have a very straightforward ray, and it sits on the head of the LIMO. Therefore, it will not see the other LIMO but rather just the wall. Lift the LIMO up will allow the distance to be correct.
+- The side information will need the data of the bounding box from the detector. 
