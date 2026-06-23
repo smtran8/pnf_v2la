@@ -89,3 +89,4 @@ The formula above aims to solve a question - how far away is a LIMO in a real wo
 - For the baseline comparison, we pick a constant velocity formula.
 + Velocity = (Position[t] - Position [t-1]) / dt with t = a specific time}
 + Predicted Position: Position[t + k] = Position [t] + Velocity * (k + 1) * dt
+- This constant velocity is expected to have high errors, as a LIMO robot will drive non-linearly, with curving and short stops
