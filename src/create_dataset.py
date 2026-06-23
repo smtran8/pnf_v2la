@@ -11,8 +11,8 @@ OUT_LEN   = 25    # number of future timesteps the model must predict
 STEP      = 1     # sliding window stride (1 = maximum overlap, fine for training)
 
 
-# At 25Hz, nominal frame interval is ~0.04s, let's use 0.2 for now
-MAX_GAP_S = 0.2  # seconds
+# At 25Hz, nominal frame interval is ~0.04s, let's use 0.2 for now => It is probably not 25Hz
+MAX_GAP_S = 0.45  # seconds
 
 
 def load_session(path: str) -> dict:

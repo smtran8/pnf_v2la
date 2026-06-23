@@ -5,9 +5,11 @@ import os
 import numpy as np
 
 
+
+IN_LEN    = 25
 OUT_LEN   = 25
 STEP      = 1
-MAX_GAP_S = 0.2
+MAX_GAP_S = 0.5
 
 
 def load_session(path: str) -> dict:
@@ -18,13 +20,21 @@ def load_session(path: str) -> dict:
             for tid, readings in raw.items()}
 
 
-def make_windows_with_timestamps(trajectory, in_len, out_len, step, max_gap_s):
+def make_windows_with_timestamps(trajectory, in_len, out_len, step, max_gap_s,
+                                 trim_end=0):
     """
     Slide an (in_len + out_len) window along one track's trajectory.
     Keeps timestamps (needed for dynamic dt in the velocity calculation).
     Discards windows containing timestamp gaps > max_gap_s.
-    Returns list of (input_chunk, target_chunk), each a list of (t, fwd, side).
+
+    trim_end: number of frames to drop from the END of the trajectory before
+              windowing. Use this to remove the final ~2s where the LIMO stops
+              due to Ctrl+C, which contaminates target sequences with a sudden
+              artificial stillness that never happened in real motion.
     """
+    if trim_end > 0:
+        trajectory = trajectory[:-trim_end] if len(trajectory) > trim_end else []
+
     total = in_len + out_len
     n = len(trajectory)
     if n < total:
@@ -85,12 +95,11 @@ def component_error(predicted, actual):
     Returns (fwd_errors, side_errors), each shape (out_len,).
     Useful for diagnosing which direction the model drifts more.
     """
-    #Grab the absolute value here => calculate aggregated mean later
     diff = np.abs(predicted - actual)
     return diff[:, 0], diff[:, 1]
 
 
-def evaluate(sessions_dir, in_len, out_len, step, max_gap_s):
+def evaluate(sessions_dir, in_len, out_len, step, max_gap_s, trim_end=0):
     json_files = sorted(glob.glob(os.path.join(sessions_dir, "*.json")))
     if not json_files:
         raise FileNotFoundError(f"No JSON files found in: {sessions_dir}")
@@ -105,7 +114,7 @@ def evaluate(sessions_dir, in_len, out_len, step, max_gap_s):
 
     print(f"Constant-Velocity Baseline")
     print(f"Window: {in_len}-in / {out_len}-out  |  "
-          f"step={step}  |  max_gap={max_gap_s}s")
+          f"step={step}  |  max_gap={max_gap_s}s  |  trim_end={trim_end} frames")
     print(f"{'─'*65}")
 
     # Collect per-session summary lines first, then print selectively
@@ -121,7 +130,7 @@ def evaluate(sessions_dir, in_len, out_len, step, max_gap_s):
 
         for tid, trajectory in session_data.items():
             windows = make_windows_with_timestamps(
-                trajectory, in_len, out_len, step, max_gap_s)
+                trajectory, in_len, out_len, step, max_gap_s, trim_end)
 
             for inp_chunk, tgt_chunk in windows:
                 predicted = constant_velocity_predict(inp_chunk, out_len)
@@ -196,11 +205,17 @@ def main():
     p.add_argument("--out-len", type=int,   default=OUT_LEN)
     p.add_argument("--step",    type=int,   default=STEP)
     p.add_argument("--max-gap", type=float, default=MAX_GAP_S)
+    p.add_argument("--trim-end", type=int, default=0,
+                   help="frames to drop from the end of each trajectory before "
+                        "windowing (e.g. 50 = ~2s at 25Hz, removes Ctrl+C stopping artefact)")
     args = p.parse_args()
 
     evaluate(args.sessions, args.in_len, args.out_len,
-             args.step, args.max_gap)
+             args.step, args.max_gap, args.trim_end)
 
 
 if __name__ == "__main__":
     main()
+    
+    
+#Trim_End argument is to strip the last 80 timesteps ~ at 25hz is around 3 seconds
