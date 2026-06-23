@@ -85,4 +85,7 @@ The formula above aims to solve a question - how far away is a LIMO in a real wo
 -This is a Time-Series forecasting - we define input/output as windows:
 - Given each time step containing Time Stamp with Forward Distance and Side Distance (calculated above), a window is a collection of time steps, with a defined size. Assume we have 25Hz frequency, a window with size = 25 will cover 1 second of movement.
 - Our Prediction will be calculating 1 second of output, with 1 second of given input. For example, assume we have a window of size 50. Assume both our input and output window has size 25. In the first index slicing, intput window will take data from timestep 0 to 24, and the output window will take data from timestep 25 to 49. At 25Hz, input/output window both convey 1 second, so we have a pipeline of 1 second of input/1 second of output. 
-  
+**Baseline Model**:
+- For the baseline comparison, we pick a constant velocity formula.
++ Velocity = (Position[t] - Position [t-1]) / dt with t = a specific time}
++ Predicted Position: Position[t + k] = Position [t] + Velocity * (k + 1) * dt
