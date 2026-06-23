@@ -79,3 +79,10 @@ The formula above aims to solve a question - how far away is a LIMO in a real wo
 **Update**:
 - Because the bounding box can contain Non-Limo objects, most of the times will be the wall behind, which could inflate the distance => Apply a minimum window options. For every pixel, take all values in the surrounding pixels (decided by a window size) and choose the minimum value => To differentiate between Limo and a wall.
 - Also to get the most accurate distance data, for any time a LIMO camera depth glitch (between None and the real distance value), we will revert back to the previous distance. Because LIMO moves slowly, the distance difference is not significant, allowing enough time for the real distance to show up.
+
+## Step 3 - Gather data and build Forecasting Model
+**June 23th**:
+-This is a Time-Series forecasting - we define input/output as windows:
+- Given each time step containing Time Stamp with Forward Distance and Side Distance (calculated above), a window is a collection of time steps, with a defined size. Assume we have 25Hz frequency, a window with size = 25 will cover 1 second of movement.
+- Our Prediction will be calculating 1 second of output, with 1 second of given input. For example, assume we have a window of size 50. Assume both our input and output window has size 25. In the first index slicing, intput window will take data from timestep 0 to 24, and the output window will take data from timestep 25 to 49. At 25Hz, input/output window both convey 1 second, so we have a pipeline of 1 second of input/1 second of output. 
+  
