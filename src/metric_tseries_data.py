@@ -30,10 +30,8 @@ CONF = 0.3
 
 SESSIONS_DIR = "/home/agilex/limo_ros2_ws/src/son_metric_projection/sessions/"
 
-#CENTER_U = 320# This will make the side distance default to 0 every time. Once we put the detector box in, u and v will be changed to follow the LIMO
-#CENTER_V = 240
+
 CROSSHAIR_COLOR = (0, 0, 255)   # red in BGR
-#CROSSHAIR_SIZE  = 20
 CROSSHAIR_THICK = 2
 
 
