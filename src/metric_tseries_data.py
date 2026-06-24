@@ -132,6 +132,22 @@ class MetricProjectionNode(Node):
         depth = self.bridge.imgmsg_to_cv2(depth_msg, desired_encoding="passthrough")
         timestamp = round(
             rgb_msg.header.stamp.sec + rgb_msg.header.stamp.nanosec * 1e-9, 3)
+        # --- Hz measurement (remove when done profiling) ---
+        # --- Hz measurement (remove when done profiling) ---
+        if not hasattr(self, '_hz_state'):
+            self._hz_state = {'last': None, 'intervals': []}
+
+        s = self._hz_state
+        if s['last'] is not None:
+            s['intervals'].append(timestamp - s['last'])
+            if len(s['intervals']) >= 25:
+                avg_dt = sum(s['intervals']) / len(s['intervals'])
+                self.get_logger().info(
+                    f"[Hz] avg={1/avg_dt:.1f}  "
+                    f"min={1/max(s['intervals']):.1f}  "
+                    f"max={1/min(s['intervals']):.1f}")
+                s['intervals'] = []
+        s['last'] = timestamp
 
         # --- Grace period countdown ---
         if not self.recording_active:

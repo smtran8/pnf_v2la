@@ -6,10 +6,10 @@ import numpy as np
 
 
 #Tweak this parameter based on the LIMO's Hz
-IN_LEN    = 10
-OUT_LEN   = 10
+IN_LEN    = 15
+OUT_LEN   = 15
 STEP      = 1
-MAX_GAP_S = 5
+MAX_GAP_S = 0.5
 
 
 def load_session(path: str) -> dict:
@@ -162,15 +162,15 @@ def evaluate(sessions_dir, in_len, out_len, step, max_gap_s, trim_end=0):
                 f"  {session_name:<32}  no valid windows")
 
     n_sessions = len(session_summaries)
-    if n_sessions <= 4:
-        for line in session_summaries:
-            print(line)
-    else:
-        for line in session_summaries[:2]:
-            print(line)
-        #print(f"  ... ({n_sessions - 4} sessions omitted) ...")
-        for line in session_summaries[-2:]:
-            print(line)
+    #if n_sessions <= 4:
+    for line in session_summaries:
+        print(line)
+    # else:
+    #     for line in session_summaries[:2]:
+    #         print(line)
+    #     #print(f"  ... ({n_sessions - 4} sessions omitted) ...")
+    #     for line in session_summaries[-2:]:
+    #         print(line)
 
     print(f"{'─'*65}")
     if not all_ade:
