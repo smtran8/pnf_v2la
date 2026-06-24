@@ -34,7 +34,8 @@ CONF = 0.3
 
 SESSIONS_DIR = "/home/agilex/limo_ros2_ws/src/son_metric_projection/sessions/"
 
-CROSSHAIR_COLOR = (0, 0, 255)   # red in BGR — kept for when display is re-enabled
+
+CROSSHAIR_COLOR = (0, 0, 255)   # red in BGR
 CROSSHAIR_THICK = 2
 
 

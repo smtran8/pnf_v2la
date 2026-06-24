@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 
-
+#Tweak this parameter based on the LIMO's Hz
 IN_LEN    = 10
 OUT_LEN   = 10
 STEP      = 1
@@ -27,10 +27,7 @@ def make_windows_with_timestamps(trajectory, in_len, out_len, step, max_gap_s,
     Keeps timestamps (needed for dynamic dt in the velocity calculation).
     Discards windows containing timestamp gaps > max_gap_s.
 
-    trim_end: number of frames to drop from the END of the trajectory before
-              windowing. Use this to remove the final ~2s where the LIMO stops
-              due to Ctrl+C, which contaminates target sequences with a sudden
-              artificial stillness that never happened in real motion.
+    trim_end: number of frames to drop from the END of the trajectory before creating windows
     """
     if trim_end > 0:
         trajectory = trajectory[:-trim_end] if len(trajectory) > trim_end else []
@@ -104,7 +101,7 @@ def evaluate(sessions_dir, in_len, out_len, step, max_gap_s, trim_end=0):
     if not json_files:
         raise FileNotFoundError(f"No JSON files found in: {sessions_dir}")
 
-    # Accumulators — one value per window, pooled across all sessions/tracks
+
     all_ade       = []
     all_fde       = []
     all_fwd_ade   = []
@@ -164,7 +161,6 @@ def evaluate(sessions_dir, in_len, out_len, step, max_gap_s, trim_end=0):
             session_summaries.append(
                 f"  {session_name:<32}  no valid windows")
 
-    # Print only first 2 and last 2 session lines to keep terminal clean
     n_sessions = len(session_summaries)
     if n_sessions <= 4:
         for line in session_summaries:
@@ -176,7 +172,6 @@ def evaluate(sessions_dir, in_len, out_len, step, max_gap_s, trim_end=0):
         for line in session_summaries[-2:]:
             print(line)
 
-    # ── Overall summary ──────────────────────────────────────────────────
     print(f"{'─'*65}")
     if not all_ade:
         print("No valid windows found across all sessions.")
