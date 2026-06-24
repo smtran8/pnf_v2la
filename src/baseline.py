@@ -6,10 +6,10 @@ import numpy as np
 
 
 
-IN_LEN    = 25
-OUT_LEN   = 25
+IN_LEN    = 10
+OUT_LEN   = 10
 STEP      = 1
-MAX_GAP_S = 0.5
+MAX_GAP_S = 5
 
 
 def load_session(path: str) -> dict:
@@ -172,7 +172,7 @@ def evaluate(sessions_dir, in_len, out_len, step, max_gap_s, trim_end=0):
     else:
         for line in session_summaries[:2]:
             print(line)
-        print(f"  ... ({n_sessions - 4} sessions omitted) ...")
+        #print(f"  ... ({n_sessions - 4} sessions omitted) ...")
         for line in session_summaries[-2:]:
             print(line)
 
