@@ -6,13 +6,13 @@ import numpy as np
 
 
 #Will tune these if needed
-IN_LEN    = 25    # number of observed timesteps fed as model input
-OUT_LEN   = 25    # number of future timesteps the model must predict
+IN_LEN    = 15    # number of observed timesteps fed as model input
+OUT_LEN   = 15    # number of future timesteps the model must predict
 STEP      = 1     # sliding window stride (1 = maximum overlap, fine for training)
 
 
 # At 25Hz, nominal frame interval is ~0.04s, let's use 0.2 for now => It is probably not 25Hz
-MAX_GAP_S = 0.45  # seconds
+MAX_GAP_S = 0.5  # seconds
 
 
 def load_session(path: str) -> dict:
