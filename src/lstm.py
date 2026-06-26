@@ -28,7 +28,7 @@ from torch.utils.data import Dataset, DataLoader
 # Hyperparameters 
 
 INPUT_SIZE   = 2        # (forward, side) per timestep
-HIDDEN_SIZE  = 128      # size of LSTM hidden/cell state
+HIDDEN_SIZE  = 96      # size of LSTM hidden/cell state
 NUM_LAYERS   = 2        # stacked LSTM layers (depth)
 DROPOUT      = 0.1      # dropout between LSTM layers (only active if NUM_LAYERS > 1)
 BATCH_SIZE   = 64
