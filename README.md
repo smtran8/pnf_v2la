@@ -94,3 +94,7 @@ The formula above aims to solve a question - how far away is a LIMO in a real wo
 ## Step 4 - Build LSTM and Transformer Model
 - Completed building LSTM (2 Encoder and 2 Decoder Layer, Dropout 0.1, Adam Optimizer, Learning Rate 0.001, MSE Loss Function, Teacher Forcing 0.5) - 0.17m Average Displacement Error
 - Completed building Transformer (2 Encoder and 2 Decoder Layer, 4 attention heads, 64 Dimensions for model, Feed-Forward Network is 256 dimensions, Dropout 0.1, Adam Optimizer, Learning Rate 0.001, MSE Loss Function) - 0.19m Average Displacement Error
+
+## Step 5 - Showcase
+- Deploy the LSTM model on NVIDIA Jetson Orin Nano. Implement Projection on 2D axis to better see predicted trajectory. Video: [Link](https://drive.google.com/file/d/1l3VpN5fp3n_ECLokBzg0-T79yaTTh0Ih/view?usp=sharing)
+- Finished project.
